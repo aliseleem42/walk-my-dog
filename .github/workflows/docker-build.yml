@@ -4,12 +4,8 @@ on:
   push:
     branches:
       - main
-      - master
-
-  pull_request:
-    branches:
-      - main
-      - master
+    paths-ignore:
+      - Dockerfile
 
 jobs:
   docker-build:
@@ -22,6 +18,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Verify Docker Installation
+        run: docker --version
+
       - name: Build Docker Image
-        run: |
-          docker build -t walk-my-dog .
+        run: docker build -t walk-my-dog .
