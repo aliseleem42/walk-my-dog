@@ -21,5 +21,37 @@ jobs:
       - name: Verify Docker Installation
         run: docker --version
 
+      - name: Increment Version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+          echo "Current Version: $VERSION"
+          echo "Commit Message: $COMMIT_MSG"
+
+          if [[ "$COMMIT_MSG" == *major* ]]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [[ "$COMMIT_MSG" == *minor* ]]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          elif [[ "$COMMIT_MSG" == *patch* ]]; then
+            PATCH=$((PATCH + 1))
+          else
+            echo "No version keyword found. Version unchanged."
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+
+          npm version "$NEW_VERSION" --no-git-tag-version
+
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+          echo "New Version: $NEW_VERSION"
+
       - name: Build Docker Image
-        run: docker build -t walk-my-dog .
+        run: docker build -t walk-my-dog:$VERSION .
